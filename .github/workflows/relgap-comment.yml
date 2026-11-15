@@ -1,0 +1,29 @@
+# relgap-action comment mode: relgap digest --pull-request keeps one comment on pull requests
+# that change mise.toml, such as Renovate's.
+name: relgap-comment
+
+on:
+  pull_request:
+    paths: ["mise.toml"]
+
+permissions: {}
+
+concurrency:
+  group: relgap-comment-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write # the comment
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # relgap reads the pins at the base commit
+          persist-credentials: false
+      - uses: sassdavid/relgap-action@b83560b05348b0f4050aa7b1d3a6fcc91e0e910a # feat/report-comment-modes
+        with:
+          mode: comment

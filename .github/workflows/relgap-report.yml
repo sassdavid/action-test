@@ -1,0 +1,84 @@
+# relgap-action report mode: SARIF in code scanning, annotations, step summary. The gate job
+# runs on workflow_dispatch only and is meant to fail with exit 3, since mise.toml pins
+# end-of-life versions on purpose.
+name: relgap-report
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths: ["mise.toml", ".github/workflows/relgap-report.yml"]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      security-events: write # the SARIF upload
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: relgap
+        uses: sassdavid/relgap-action@b83560b05348b0f4050aa7b1d3a6fcc91e0e910a # feat/report-comment-modes
+        with:
+          mode: report
+      - name: check the outputs
+        env:
+          OUT: ${{ toJSON(steps.relgap.outputs) }}
+        run: echo "$OUT"
+
+  # The same run on macOS and Windows, without the upload: the files and outputs must be there.
+  os:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: relgap
+        uses: sassdavid/relgap-action@b83560b05348b0f4050aa7b1d3a6fcc91e0e910a # feat/report-comment-modes
+        with:
+          mode: report
+          sarif: false
+      - name: check the files
+        shell: bash
+        env:
+          JSON: ${{ steps.relgap.outputs.json-file }}
+          SARIF: ${{ steps.relgap.outputs.sarif-file }}
+          MD: ${{ steps.relgap.outputs.md-file }}
+        run: |
+          for f in "$JSON" "$SARIF" "$MD"; do
+            test -s "$f" || { echo "missing: '$f'"; exit 1; }
+            echo "ok: $f"
+          done
+
+  gate:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: sassdavid/relgap-action@b83560b05348b0f4050aa7b1d3a6fcc91e0e910a # feat/report-comment-modes
+        with:
+          mode: report
+          sarif: false
+          fail-on: eol, vuln

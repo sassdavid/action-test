@@ -1,0 +1,87 @@
+# tfcensus-action report mode on recorded plans (plans/, copied from tfcensus's
+# testdata/drift/ingest): SARIF in code scanning, annotations, step summary. No AWS account is
+# involved. The gate job runs on workflow_dispatch only and is meant to fail with exit 3.
+name: tfcensus-report
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths: ["live/**", "plans/**", ".tfcensus.yaml", ".github/workflows/tfcensus-report.yml"]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      security-events: write # the SARIF upload
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: tfcensus
+        uses: sassdavid/tfcensus-action@96879412051d75d4ed3724dbf88618b72bb4994e # feat/report-comment-modes
+        with:
+          mode: report
+          from: plans
+      - name: check the outputs
+        env:
+          OUT: ${{ toJSON(steps.tfcensus.outputs) }}
+        run: echo "$OUT"
+
+  # The same run on macOS and Windows, without the upload: the files and outputs must be there.
+  os:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: tfcensus
+        uses: sassdavid/tfcensus-action@96879412051d75d4ed3724dbf88618b72bb4994e # feat/report-comment-modes
+        with:
+          mode: report
+          from: plans
+          sarif: false
+      - name: check the files
+        shell: bash
+        env:
+          JSON: ${{ steps.tfcensus.outputs.json-file }}
+          SARIF: ${{ steps.tfcensus.outputs.sarif-file }}
+          MD: ${{ steps.tfcensus.outputs.md-file }}
+        run: |
+          for f in "$JSON" "$SARIF" "$MD"; do
+            test -s "$f" || { echo "missing: '$f'"; exit 1; }
+            echo "ok: $f"
+          done
+
+  gate:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: sassdavid/tfcensus-action@96879412051d75d4ed3724dbf88618b72bb4994e # feat/report-comment-modes
+        with:
+          mode: report
+          from: plans
+          sarif: false
+          fail-on: drift

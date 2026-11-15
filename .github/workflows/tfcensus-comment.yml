@@ -1,0 +1,30 @@
+# tfcensus-action comment mode: tfcensus notify keeps one comment with the drift report on pull
+# requests that change the units or the recorded plans.
+name: tfcensus-comment
+
+on:
+  pull_request:
+    paths: ["live/**", "plans/**", ".tfcensus.yaml"]
+
+permissions: {}
+
+concurrency:
+  group: tfcensus-comment-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write # the comment
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: sassdavid/tfcensus-action@96879412051d75d4ed3724dbf88618b72bb4994e # feat/report-comment-modes
+        with:
+          mode: comment
+          from: plans
+          sarif: false

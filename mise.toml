@@ -1,0 +1,8 @@
+# Old pins on purpose: relgap outdated finds end-of-life versions, advisories and breaking
+# changes here, and Renovate opens the pull requests that relgap digest comments on.
+[tools]
+kubectl = "1.34.13"
+helm = "3.18.0"
+terraform = "1.15.8"
+gh = "2.103.3"
+jq = "1.7.1"
