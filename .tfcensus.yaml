@@ -1,5 +1,3 @@
 schema_version: 1
 drift:
-  noise:
-    - preset: aws-tags-all
-    - preset: computed-hashes
+  noise: []
