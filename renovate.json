@@ -1,6 +1,32 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
-  "enabledManagers": ["mise"],
-  "dependencyDashboard": false
+  "extends": ["config:best-practices"],
+  "enabledManagers": ["mise", "github-actions"],
+  "minimumReleaseAge": "3 days",
+  "lockFileMaintenance": {
+    "enabled": false
+  },
+  "packageRules": [
+    {
+      "description": "One PR for all non-major GitHub Actions updates; majors get their own PR",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
+      "groupName": "GitHub Actions"
+    },
+    {
+      "description": "The workflows test the newest relgap-action and tfcensus-action release, with no cooldown and in their own PR",
+      "matchDepNames": ["sassdavid/relgap-action", "sassdavid/tfcensus-action"],
+      "groupName": null,
+      "minimumReleaseAge": null
+    },
+    {
+      "description": "ghcr.io has no release timestamps, so age the renovate-version input by the npm release of the same version",
+      "matchManagers": ["github-actions"],
+      "matchDepTypes": ["uses-with"],
+      "matchPackageNames": ["ghcr.io/renovatebot/renovate"],
+      "overrideDatasource": "npm",
+      "overridePackageName": "renovate",
+      "pinDigests": false
+    }
+  ]
 }

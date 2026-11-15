@@ -28,7 +28,7 @@ jobs:
         with:
           persist-credentials: false
       - id: relgap
-        uses: sassdavid/relgap-action@b83560b05348b0f4050aa7b1d3a6fcc91e0e910a # feat/report-comment-modes
+        uses: sassdavid/relgap-action@4c1862331d5a9380bab6f9fcd7f65c74839d8370 # v1.0.0
         with:
           mode: report
       - name: check the outputs
@@ -51,7 +51,7 @@ jobs:
         with:
           persist-credentials: false
       - id: relgap
-        uses: sassdavid/relgap-action@b83560b05348b0f4050aa7b1d3a6fcc91e0e910a # feat/report-comment-modes
+        uses: sassdavid/relgap-action@4c1862331d5a9380bab6f9fcd7f65c74839d8370 # v1.0.0
         with:
           mode: report
           sarif: false
@@ -77,7 +77,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: sassdavid/relgap-action@b83560b05348b0f4050aa7b1d3a6fcc91e0e910a # feat/report-comment-modes
+      - uses: sassdavid/relgap-action@4c1862331d5a9380bab6f9fcd7f65c74839d8370 # v1.0.0
         with:
           mode: report
           sarif: false

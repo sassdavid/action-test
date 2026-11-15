@@ -11,6 +11,10 @@ infrastructure.
 | `tfcensus-report.yml` | report mode: `tfcensus drift` SARIF from recorded plans, on Linux, macOS and Windows; `fail-on` exits 3 (`gate`) |
 | `tfcensus-comment.yml` | comment mode: one drift comment on pull requests that change `live/` or `plans/` |
 
+`renovate.yml` runs Renovate weekly as the `sassdavid-renovate` GitHub App. It opens one pull
+request per `mise.toml` tool, which `relgap-comment.yml` digests, and one when a new
+relgap-action or tfcensus-action release comes out. Don't merge the `mise.toml` pull requests.
+
 `mise.toml` pins old versions on purpose. `plans/` and `.tfcensus.yaml` come from tfcensus's
 `testdata/drift/ingest` (Apache-2.0), without its failed unit, and `live/` has a stub
 `terragrunt.hcl` for each unit so code scanning can link to it. No AWS account is involved.
