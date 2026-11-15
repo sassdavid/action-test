@@ -1,4 +1,3 @@
 schema_version: 1
 drift:
   noise:
-    - preset: aws-tags-all
