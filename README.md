@@ -12,11 +12,17 @@ infrastructure.
 | `tfcensus-comment.yml` | comment mode: one drift comment on pull requests that change `live/` or `plans/` |
 
 `renovate.yml` runs Renovate weekly as the `sassdavid-renovate` GitHub App. It opens one pull
-request per `mise.toml` tool, which `relgap-comment.yml` digests, and one when a new
-relgap-action or tfcensus-action release comes out. Don't merge the `mise.toml` pull requests.
+request per `mise.toml` tool, which `relgap-comment.yml` digests, and one when a new relgap-action
+or tfcensus-action release comes out. Merging a `mise.toml` pull request moves the pin; to test
+against an older version again, set the old pin by hand.
 
-`mise.toml` pins old versions on purpose. `plans/` and `.tfcensus.yaml` come from tfcensus's
-`testdata/drift/ingest` (Apache-2.0), without its failed unit, and `live/` has a stub
+Unlike the tool repos, `renovate.json` doesn't group `mise.toml` updates, because comment mode is
+tested on one tool per pull request. `renovate.yml` and `renovate-config.yml` are the same files as
+in the tool and action repos; the setup and the reasons are in relgap's engineering
+[ADR-0015](https://github.com/sassdavid/relgap/blob/main/docs/engineering/adr/0015-dependency-updates-renovate.md).
+
+`mise.toml` started with old pins for the M14 evidence. `plans/` and `.tfcensus.yaml` come from
+tfcensus's `testdata/drift/ingest` (Apache-2.0), without its failed unit, and `live/` has a stub
 `terragrunt.hcl` for each unit so code scanning can link to it. No AWS account is involved.
 
 The fork fallback (no comment, step summary only) is tested with a fake event in each action
