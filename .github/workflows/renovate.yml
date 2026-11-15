@@ -1,0 +1,64 @@
+name: Renovate
+
+# Self-hosted Renovate, authenticated as the owner's GitHub App (sassdavid-renovate), copied from
+# advent-of-code-rust. It opens the mise.toml pull requests that relgap-comment.yml digests. The
+# update rules live in renovate.json. Runs weekly or by hand (Actions > Renovate > Run workflow).
+on:
+  schedule:
+    - cron: "17 4 * * 1" # Mondays 04:17 UTC, off the hour to avoid the scheduler peak
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false # never interrupt a run halfway through pushing branches
+
+jobs:
+  renovate:
+    name: renovate
+    if: github.ref == 'refs/heads/main'
+    # The app key is a secret of this environment, whose deployment branches are main only.
+    environment: renovate
+    # The action runs Renovate in a Docker container, which ubuntu-slim does not support.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Renovate does not use GITHUB_TOKEN, it clones and pushes with the app token.
+    permissions: {}
+    steps:
+      # Installation token for this repository only, expires after 1 hour, revoked when the job
+      # ends. Every permission listed here must also be granted to the app installation.
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.RENOVATE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
+          permission-contents: write # branches and commits
+          permission-pull-requests: write # open and update PRs
+          permission-workflows: write # changes to .github/workflows/
+          permission-issues: write # Dependency Dashboard issue
+          permission-statuses: write # renovate/stability-days status (minimumReleaseAge)
+          permission-checks: read # branch status
+          permission-administration: read # branch protection
+          permission-vulnerability-alerts: read # Dependabot alerts
+          permission-merge-queues: read # merge queue detection
+          permission-metadata: read
+      - name: Run Renovate
+        uses: renovatebot/github-action@1c0cf989c02653fba0efe7ca5772338860ca71dc # v46.3.12
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          renovate-version: 44.201.1
+        env:
+          RENOVATE_PLATFORM: github
+          RENOVATE_REPOSITORIES: ${{ github.repository }}
+          RENOVATE_AUTODISCOVER: "false"
+          # renovate.json is already there, so no onboarding PR. Without it Renovate skips the
+          # repository.
+          RENOVATE_ONBOARDING: "false"
+          RENOVATE_REQUIRE_CONFIG: required
+          # Commits through the GitHub API, signed by GitHub as the app (shows as Verified).
+          RENOVATE_PLATFORM_COMMIT: enabled
+          # Branch names that can't clash with the hosted Mend Renovate app. relgap digest
+          # still narrows to the named dependency: it reads the renovate-debug comment.
+          RENOVATE_BRANCH_PREFIX: renovate-self-hosted/
