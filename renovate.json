@@ -3,6 +3,7 @@
   "extends": ["config:best-practices"],
   "enabledManagers": ["mise", "github-actions"],
   "minimumReleaseAge": "3 days",
+  "prHourlyLimit": 0,
   "lockFileMaintenance": {
     "enabled": false
   },
