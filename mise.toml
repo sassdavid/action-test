@@ -1,5 +1,5 @@
-# Old pins on purpose: relgap outdated finds end-of-life versions, advisories and breaking
-# changes here, and Renovate opens the pull requests that relgap digest comments on.
+# relgap outdated reports end-of-life versions, advisories and breaking changes for these pins,
+# and Renovate opens the pull requests that relgap digest comments on, one per tool.
 [tools]
 kubectl = "1.37.2"
 helm = "4.3.1"
