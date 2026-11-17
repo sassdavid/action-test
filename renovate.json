@@ -4,6 +4,7 @@
   "enabledManagers": ["mise", "github-actions"],
   "minimumReleaseAge": "3 days",
   "prHourlyLimit": 0,
+  "osvVulnerabilityAlerts": true,
   "lockFileMaintenance": {
     "enabled": false
   },
