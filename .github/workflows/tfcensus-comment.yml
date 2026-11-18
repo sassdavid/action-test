@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: sassdavid/tfcensus-action@148f21b48c6ec74e4ee86a5007f11a3c7496a32c # v1.1.0
+      - uses: sassdavid/tfcensus-action@f2e424405b36d9a380bf64f3ae4920652decff15 # v1.2.0
         with:
           mode: comment
           from: plans
