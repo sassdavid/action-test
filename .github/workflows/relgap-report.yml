@@ -1,6 +1,6 @@
-# relgap-action report mode: SARIF in code scanning, annotations, step summary. The gate job
-# runs on workflow_dispatch only and is meant to fail with exit 3, since mise.toml pins
-# end-of-life versions on purpose.
+# relgap-action report mode: SARIF in code scanning, annotations, step summary. The gate jobs
+# run on workflow_dispatch only and are meant to fail with exit 3, since mise.toml pins
+# end-of-life versions on purpose and kubectl's latest release still has advisories.
 name: relgap-report
 
 on:
@@ -66,6 +66,44 @@ jobs:
             test -s "$f" || { echo "missing: '$f'"; exit 1; }
             echo "ok: $f"
           done
+
+  # relgap audit, reported without failing: audit gates vuln by default.
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      security-events: write # the SARIF upload
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: relgap
+        uses: sassdavid/relgap-action@cadc79639babe44568730ec83fa837c0b0bb1425 # feat/audit-command
+        with:
+          mode: report
+          command: audit
+          args: --fail-on=
+      - name: check the outputs
+        env:
+          OUT: ${{ toJSON(steps.relgap.outputs) }}
+        run: echo "$OUT"
+
+  audit-gate:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: sassdavid/relgap-action@cadc79639babe44568730ec83fa837c0b0bb1425 # feat/audit-command
+        with:
+          mode: report
+          command: audit
+          sarif: false
 
   gate:
     if: github.event_name == 'workflow_dispatch'

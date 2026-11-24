@@ -1,10 +1,10 @@
-# relgap-action comment mode: relgap digest --pull-request keeps one comment on pull requests
-# that change mise.toml, such as Renovate's.
+# relgap-action comment mode: relgap digest --pull-request and relgap audit each keep one comment
+# on pull requests that change mise.toml, such as Renovate's.
 name: relgap-comment
 
 on:
   pull_request:
-    paths: ["mise.toml"]
+    paths: ["mise.toml", ".github/workflows/relgap-comment.yml"]
 
 permissions: {}
 
@@ -27,3 +27,21 @@ jobs:
       - uses: sassdavid/relgap-action@518ce61cef05d84d2bd980c553bd24fdca9ed0c7 # v1.2.0
         with:
           mode: comment
+
+  # Comments without failing: audit gates vuln by default, and kubectl's latest release still has
+  # an advisory.
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write # the comment
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: sassdavid/relgap-action@cadc79639babe44568730ec83fa837c0b0bb1425 # feat/audit-command
+        with:
+          mode: comment
+          command: audit
+          args: --fail-on=
