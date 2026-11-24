@@ -1,6 +1,7 @@
 # relgap-action report mode: SARIF in code scanning, annotations, step summary. The gate jobs
-# run on workflow_dispatch only and are meant to fail with exit 3, since mise.toml pins
-# end-of-life versions on purpose and kubectl's latest release still has advisories.
+# run on workflow_dispatch only and check that the action exits 3, since mise.toml pins
+# end-of-life versions on purpose and kubectl's latest release still has advisories. They pass
+# when the gate matches and fail when it doesn't.
 name: relgap-report
 
 on:
@@ -99,11 +100,21 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: sassdavid/relgap-action@72f0b2c5c6db2930ef7d3410e4700eeec60595e8 # v1.3.1
+      - id: gate
+        continue-on-error: true
+        uses: sassdavid/relgap-action@72f0b2c5c6db2930ef7d3410e4700eeec60595e8 # v1.3.1
         with:
           mode: report
           command: audit
           sarif: false
+      - name: check the gate
+        env:
+          OUTCOME: ${{ steps.gate.outcome }}
+          CODE: ${{ steps.gate.outputs.exit-code }}
+        run: |
+          test "$OUTCOME" = failure && test "$CODE" = 3 ||
+            { echo "want a failed step with exit-code 3, got $OUTCOME and '$CODE'"; exit 1; }
+          echo "ok: the gate matched and exited 3"
 
   gate:
     if: github.event_name == 'workflow_dispatch'
@@ -115,8 +126,18 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: sassdavid/relgap-action@72f0b2c5c6db2930ef7d3410e4700eeec60595e8 # v1.3.1
+      - id: gate
+        continue-on-error: true
+        uses: sassdavid/relgap-action@72f0b2c5c6db2930ef7d3410e4700eeec60595e8 # v1.3.1
         with:
           mode: report
           sarif: false
           fail-on: eol, vuln
+      - name: check the gate
+        env:
+          OUTCOME: ${{ steps.gate.outcome }}
+          CODE: ${{ steps.gate.outputs.exit-code }}
+        run: |
+          test "$OUTCOME" = failure && test "$CODE" = 3 ||
+            { echo "want a failed step with exit-code 3, got $OUTCOME and '$CODE'"; exit 1; }
+          echo "ok: the gate matched and exited 3"
