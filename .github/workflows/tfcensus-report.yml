@@ -1,6 +1,7 @@
 # tfcensus-action report mode on recorded plans (plans/, copied from tfcensus's
 # testdata/drift/ingest): SARIF in code scanning, annotations, step summary. No AWS account is
-# involved. The gate job runs on workflow_dispatch only and is meant to fail with exit 3.
+# involved. The gate job runs on workflow_dispatch only and checks that the action exits 3: it
+# passes when the gate matches the recorded drift and fails when it doesn't.
 name: tfcensus-report
 
 on:
@@ -79,9 +80,19 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: sassdavid/tfcensus-action@281f0a0735aa5770702f383cabd303372b0f6a00 # v1.2.1
+      - id: gate
+        continue-on-error: true
+        uses: sassdavid/tfcensus-action@281f0a0735aa5770702f383cabd303372b0f6a00 # v1.2.1
         with:
           mode: report
           from: plans
           sarif: false
           fail-on: drift
+      - name: check the gate
+        env:
+          OUTCOME: ${{ steps.gate.outcome }}
+          CODE: ${{ steps.gate.outputs.exit-code }}
+        run: |
+          test "$OUTCOME" = failure && test "$CODE" = 3 ||
+            { echo "want a failed step with exit-code 3, got $OUTCOME and '$CODE'"; exit 1; }
+          echo "ok: the gate matched and exited 3"
