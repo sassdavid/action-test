@@ -24,7 +24,7 @@ jobs:
         with:
           fetch-depth: 0 # relgap reads the pins at the base commit
           persist-credentials: false
-      - uses: sassdavid/relgap-action@1ef08a23291bae490612d9a2d1642bef551e76ad # v1.3.0
+      - uses: sassdavid/relgap-action@e2c5845268ce5301a0331a2f2759179f08c2cc38 # fix/comment-min-0.13.1
         with:
           mode: comment
 
@@ -40,8 +40,31 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: sassdavid/relgap-action@1ef08a23291bae490612d9a2d1642bef551e76ad # v1.3.0
+      - uses: sassdavid/relgap-action@e2c5845268ce5301a0331a2f2759179f08c2cc38 # fix/comment-min-0.13.1
         with:
           mode: comment
           command: audit
           args: --fail-on=
+
+  # Comment mode refuses a relgap release older than the minimum in the action's tool.env, before
+  # the install: older releases can notify upstream authors from the comment.
+  old-version:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - id: relgap
+        continue-on-error: true
+        uses: sassdavid/relgap-action@e2c5845268ce5301a0331a2f2759179f08c2cc38 # fix/comment-min-0.13.1
+        with:
+          mode: comment
+          version: 0.13.0
+      - name: check the refusal
+        env:
+          OUTCOME: ${{ steps.relgap.outcome }}
+          INSTALLED: ${{ steps.relgap.outputs.path }}
+        run: |
+          test "$OUTCOME" = failure || { echo "comment mode ran relgap 0.13.0"; exit 1; }
+          test -z "$INSTALLED" || { echo "relgap was installed before the refusal"; exit 1; }
+          echo "ok: refused before the install"
