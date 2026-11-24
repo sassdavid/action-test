@@ -24,7 +24,7 @@ jobs:
         with:
           fetch-depth: 0 # relgap reads the pins at the base commit
           persist-credentials: false
-      - uses: sassdavid/relgap-action@1ef08a23291bae490612d9a2d1642bef551e76ad # v1.3.0
+      - uses: sassdavid/relgap-action@72f0b2c5c6db2930ef7d3410e4700eeec60595e8 # v1.3.1
         with:
           mode: comment
 
@@ -40,7 +40,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: sassdavid/relgap-action@1ef08a23291bae490612d9a2d1642bef551e76ad # v1.3.0
+      - uses: sassdavid/relgap-action@72f0b2c5c6db2930ef7d3410e4700eeec60595e8 # v1.3.1
         with:
           mode: comment
           command: audit
