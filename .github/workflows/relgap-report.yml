@@ -1,6 +1,6 @@
-# relgap-action report mode: SARIF in code scanning, annotations, step summary. The gate job
-# runs on workflow_dispatch only and is meant to fail with exit 3, since mise.toml pins
-# end-of-life versions on purpose.
+# relgap-action report mode: SARIF in code scanning, annotations, step summary. The gate jobs
+# run on workflow_dispatch only and are meant to fail with exit 3, since mise.toml pins
+# end-of-life versions on purpose and kubectl's latest release still has advisories.
 name: relgap-report
 
 on:
@@ -28,7 +28,7 @@ jobs:
         with:
           persist-credentials: false
       - id: relgap
-        uses: sassdavid/relgap-action@518ce61cef05d84d2bd980c553bd24fdca9ed0c7 # v1.2.0
+        uses: sassdavid/relgap-action@1ef08a23291bae490612d9a2d1642bef551e76ad # v1.3.0
         with:
           mode: report
       - name: check the outputs
@@ -51,7 +51,7 @@ jobs:
         with:
           persist-credentials: false
       - id: relgap
-        uses: sassdavid/relgap-action@518ce61cef05d84d2bd980c553bd24fdca9ed0c7 # v1.2.0
+        uses: sassdavid/relgap-action@1ef08a23291bae490612d9a2d1642bef551e76ad # v1.3.0
         with:
           mode: report
           sarif: false
@@ -67,6 +67,44 @@ jobs:
             echo "ok: $f"
           done
 
+  # relgap audit, reported without failing: audit gates vuln by default.
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      security-events: write # the SARIF upload
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: relgap
+        uses: sassdavid/relgap-action@1ef08a23291bae490612d9a2d1642bef551e76ad # v1.3.0
+        with:
+          mode: report
+          command: audit
+          args: --fail-on=
+      - name: check the outputs
+        env:
+          OUT: ${{ toJSON(steps.relgap.outputs) }}
+        run: echo "$OUT"
+
+  audit-gate:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: sassdavid/relgap-action@1ef08a23291bae490612d9a2d1642bef551e76ad # v1.3.0
+        with:
+          mode: report
+          command: audit
+          sarif: false
+
   gate:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
@@ -77,7 +115,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: sassdavid/relgap-action@518ce61cef05d84d2bd980c553bd24fdca9ed0c7 # v1.2.0
+      - uses: sassdavid/relgap-action@1ef08a23291bae490612d9a2d1642bef551e76ad # v1.3.0
         with:
           mode: report
           sarif: false
